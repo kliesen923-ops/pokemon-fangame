@@ -47,7 +47,7 @@ export const view = {
   foe: null,
   ball: null,
   draw(g, tick) {
-    const W = g.canvas.width, H = g.canvas.height;
+    const W = 240, H = 176;
     const sky = g.createLinearGradient(0, 0, 0, H);
     if (this.dark) {
       sky.addColorStop(0, '#2a2030');
@@ -60,13 +60,13 @@ export const view = {
     g.fillStyle = sky;
     g.fillRect(0, 0, W, H);
     g.fillStyle = this.dark ? '#5a4a40' : '#88c070';
-    ellipse(g, 176, 92, 52, 12);
-    ellipse(g, 64, 146, 60, 14);
+    ellipse(g, 176, 78, 50, 11);
+    ellipse(g, 60, 130, 58, 13);
     g.fillStyle = this.dark ? '#6a5a50' : '#a0d888';
-    ellipse(g, 176, 90, 46, 9);
-    ellipse(g, 64, 144, 54, 11);
-    drawSide(g, this.foe, tick, 176, 74, 7);
-    drawSide(g, this.me, tick, 64, 124, 3);
+    ellipse(g, 176, 76, 44, 8);
+    ellipse(g, 60, 128, 52, 10);
+    drawSide(g, this.foe, tick, 176, 60, 7);
+    drawSide(g, this.me, tick, 60, 110, 3);
     if (this.ball) drawBall(g, this.ball, tick);
   },
 };
@@ -119,7 +119,6 @@ function hudHTML(b, isMe) {
   const pct = Math.max(0, p.hp / p.maxhp) * 100;
   const col = pct > 50 ? '#48c048' : pct > 20 ? '#e8c020' : '#e04030';
   const st = p.status ? `<span class="st st-${p.status}">${STATUS[p.status]}</span>` : '';
-  const types = b.types.map((t) => `<span class="type" style="background:${TYPES[t][1]}">${TYPES[t][0]}</span>`).join('');
   let expBar = '';
   if (isMe) {
     const lo = p.lv ** 3, hi = (p.lv + 1) ** 3;
@@ -128,9 +127,8 @@ function hudHTML(b, isMe) {
   return `<img class="portrait" src="${monAssets(b.view).portrait}" alt="">
     <div class="hud-body">
       <div class="hud-name">${monName(p)} <span class="lv">Lv${p.lv}</span>${st}</div>
-      <div class="hud-types">${types}</div>
       <div class="hp"><span>HP</span><div class="bar"><div style="width:${pct}%;background:${col}"></div></div></div>
-      ${isMe ? `<div class="hpnum">${Math.max(0, p.hp)} / ${p.maxhp}</div>` : ''}
+      ${isMe ? `<div class="hpnum">${Math.max(0, p.hp)}/${p.maxhp}</div>` : ''}
       ${expBar}
     </div>`;
 }
@@ -362,16 +360,16 @@ export class Battle {
   async throwBall(item) {
     await say(`${this.game.state.name}은(는) ${item.name}을(를) 던졌다!`, { auto: 400 });
     const p = this.foe.mon;
-    const ball = { x: 60, y: 120, color: item.ball >= 2 ? '#f0c020' : item.ball > 1 ? '#3860e0' : '#e83838' };
+    const ball = { x: 60, y: 110, color: item.ball >= 2 ? '#f0c020' : item.ball > 1 ? '#3860e0' : '#e83838' };
     view.ball = ball;
     for (let i = 0; i <= 12; i++) {
       ball.x = 60 + (116 * i) / 12;
-      ball.y = 120 - Math.sin((i / 12) * Math.PI) * 60 - (i / 12) * 50;
+      ball.y = 110 - Math.sin((i / 12) * Math.PI) * 50 - (i / 12) * 42;
       await sleep(25);
     }
     view.foe.hidden = true;
     this.updateHud();
-    ball.y = 88;
+    ball.y = 72;
     const rate = DEX[p.id].catch;
     const statusMul = p.status === 'slp' ? 2.5 : p.status ? 1.5 : 1;
     const a = (((3 * p.maxhp - 2 * p.hp) * rate * item.ball) / (3 * p.maxhp)) * statusMul;

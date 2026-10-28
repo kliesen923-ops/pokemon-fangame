@@ -16,8 +16,30 @@ const STARTER_LV = 5;
 
 const canvas = document.getElementById('screen');
 const g = canvas.getContext('2d');
-g.imageSmoothingEnabled = false;
-const VW = canvas.width, VH = canvas.height;
+const VW = 240, VH = 176;
+
+// 픽셀이 뭉개지지 않도록 캔버스를 기기 픽셀 기준 정수 배율로 맞춘다.
+// 논리 1픽셀 = 기기 픽셀 k개, CSS 크기 = 240*k/dpr
+function fitScreen() {
+  const dpr = window.devicePixelRatio || 1;
+  const pad = document.getElementById('pad');
+  const reserve = innerWidth > innerHeight && innerWidth >= 900 ? 40 : Math.max(190, pad ? 190 : 0);
+  const maxW = Math.min(innerWidth, 960), maxH = innerHeight - reserve;
+  const k = Math.max(1, Math.floor(Math.min((maxW * dpr) / VW, (maxH * dpr) / VH)));
+  canvas.width = VW * k;
+  canvas.height = VH * k;
+  const wrap = document.getElementById('screen-wrap');
+  wrap.style.width = (VW * k) / dpr + 'px';
+  wrap.style.height = (VH * k) / dpr + 'px';
+  g.setTransform(k, 0, 0, k, 0, 0);
+  g.imageSmoothingEnabled = false;
+  const root = document.documentElement.style;
+  root.setProperty('--px', k / dpr + 'px'); // 논리 1픽셀의 CSS 크기
+  root.setProperty('--pm', Math.max(1, Math.floor(k / 2)) / dpr + 'px'); // 초상화 배율
+  root.setProperty('--fs', 12 * Math.max(1, Math.floor(k / dpr / 1.25)) + 'px'); // Galmuri11은 12px 배수에서 선명
+}
+addEventListener('resize', fitScreen);
+fitScreen();
 
 function newState(name) {
   return {
@@ -677,6 +699,9 @@ function rollWild(enc) {
     if (!m || m.legend || !enc.habs.includes(m.hab)) continue;
     const ml = minLevel[m.id];
     if (ml > enc.max) continue;
+    // 초반 맵에 에레브·스라크 같은 강한 단일 진화형이 나오지 않도록
+    const bst = m.base.reduce((x, y) => x + y, 0);
+    if (bst > 400 && enc.max < 15) continue;
     let w = ml <= 1 ? 10 : ml <= 20 ? 4 : 1;
     if (STARTER_LINES.has(m.id)) w = 0.5;
     if (m.catch <= 45 && ml <= 1) w = Math.min(w, 3);
@@ -911,7 +936,7 @@ async function title() {
     c.clearRect(0, 0, 240, 64);
     showcase.forEach((id, i) => {
       const a = monAssets(id);
-      drawMon(c, a.Walk, a.info.Walk, 0, frameIndex(a.info.Walk.d, game.tick + i * 9), 36 + i * 56, 34, 1.5);
+      drawMon(c, a.Walk, a.info.Walk, 0, frameIndex(a.info.Walk.d, game.tick + i * 9), 36 + i * 56, 34, 1);
     });
     requestAnimationFrame(loop);
   })();

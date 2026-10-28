@@ -22,21 +22,25 @@ const VW = 240, VH = 176;
 // 논리 1픽셀 = 기기 픽셀 k개, CSS 크기 = 240*k/dpr
 function fitScreen() {
   const dpr = window.devicePixelRatio || 1;
-  const pad = document.getElementById('pad');
-  const reserve = innerWidth > innerHeight && innerWidth >= 900 ? 40 : Math.max(190, pad ? 190 : 0);
+  const reserve = innerWidth > innerHeight && innerWidth >= 900 ? 40 : 190;
   const maxW = Math.min(innerWidth, 960), maxH = innerHeight - reserve;
   const k = Math.max(1, Math.floor(Math.min((maxW * dpr) / VW, (maxH * dpr) / VH)));
   canvas.width = VW * k;
   canvas.height = VH * k;
+  // 위치까지 기기 픽셀 경계에 맞춰야 브라우저가 캔버스를 다시 보간하지 않는다
+  const dev = (n) => Math.round(n * dpr) / dpr;
   const wrap = document.getElementById('screen-wrap');
   wrap.style.width = (VW * k) / dpr + 'px';
   wrap.style.height = (VH * k) / dpr + 'px';
+  wrap.style.marginLeft = dev((innerWidth - (VW * k) / dpr) / 2) + 'px';
+  wrap.style.marginTop = dev(6) + 'px';
   g.setTransform(k, 0, 0, k, 0, 0);
   g.imageSmoothingEnabled = false;
   const root = document.documentElement.style;
-  root.setProperty('--px', k / dpr + 'px'); // 논리 1픽셀의 CSS 크기
-  root.setProperty('--pm', Math.max(1, Math.floor(k / 2)) / dpr + 'px'); // 초상화 배율
-  root.setProperty('--fs', 12 * Math.max(1, Math.floor(k / dpr / 1.25)) + 'px'); // Galmuri11은 12px 배수에서 선명
+  root.setProperty('--px', k / dpr + 'px'); // 논리 1픽셀의 CSS 크기 (= 기기 픽셀 k개)
+  root.setProperty('--pm', Math.max(1, Math.floor(k / 2)) / dpr + 'px'); // 초상화 배율 (기기 픽셀 정수배)
+  // Galmuri11은 12픽셀 격자 글꼴: 기기 픽셀로 12의 정수배가 되게 한다
+  root.setProperty('--fs', (12 * Math.max(1, Math.floor(k * 0.75 + 0.25))) / dpr + 'px');
 }
 addEventListener('resize', fitScreen);
 fitScreen();
